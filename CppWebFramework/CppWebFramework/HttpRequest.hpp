@@ -11,17 +11,23 @@ public:
     std::string getURI() const;
     std::string getVersion() const;
     std::string getHeader(const std::string& field) const;
-    std::string getRaw() const;
+    std::string getParam(const std::string& field) const;
+
+    void setMethod(const std::string& method);
+    void setURI(const std::string& uri);
+    void setVersion(const std::string& version);
+    void addHeader(const std::string& field, const std::string& value);
+    void addParam(const std::string& field, const std::string& value);
 
 private:
     std::string method;
     std::string uri;
     std::string version;
     std::map<std::string, std::string> headers;
-
-    const std::string rawRequest;
+    std::map<std::string, std::string> params;
 
     void parseRaw(const char* request);
     void parseRequestLine(const std::string& line);
     void parseHeaderLine(const std::string& line);
+    void parseUriParams();
 };

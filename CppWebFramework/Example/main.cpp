@@ -2,7 +2,6 @@
 
 int main() {
     Server server("0.0.0.0", 4000);
-
-    server.Run();
+    server.run();
     return 0;
 }
