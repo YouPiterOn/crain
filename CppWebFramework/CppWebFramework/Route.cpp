@@ -2,13 +2,14 @@
 #include <algorithm>
 #include <sstream>
 
-Route::Route(const std::string& path, const std::string& method) {
+Route::Route(const std::string& path, const std::string& method, const RouteHandler& handler) {
     setPath(path);
     setMethod(method);
+    setHandler(handler);
 }
 
 bool Route::isRouteMatch(HttpRequest& request) {
-    if(request.getMethod() != method) {
+    if(request.getMethod() != method && method != "ANY") {
         return false;
     }
     auto routeParts = splitPath(path);
@@ -32,13 +33,17 @@ bool Route::isRouteMatch(HttpRequest& request) {
     return true;
 }
 
-void Route::setMethod(const std::string& method) {
-    std::transform(method.begin(), method.end(), method.begin(), ::toupper);
+void Route::setMethod(std::string method) {
+    auto m(method);
+    std::transform(m.begin(), m.end(), m.begin(), [](char c) { return std::toupper(c); });
     this->method = method;
 }
-void Route::setPath(const std::string& path) {
-    std::transform(path.begin(), path.end(), path.begin(), ::tolower);
+void Route::setPath(std::string path) {
+    std::transform(path.begin(), path.end(), path.begin(), [](char c) { return std::tolower(c); });
     this->path = path;
+}
+void Route::setHandler(const RouteHandler& handler) {
+    this->handler = handler;
 }
 
 std::string Route::getMethod() {
@@ -46,6 +51,9 @@ std::string Route::getMethod() {
 }
 std::string Route::getPath() {
     return path;
+}
+Route::RouteHandler Route::getHandler() {
+    return handler;
 }
 
 

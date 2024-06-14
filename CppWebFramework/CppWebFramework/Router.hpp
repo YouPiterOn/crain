@@ -2,15 +2,17 @@
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 #include "Route.hpp"
-#include <map>
+#include <vector>
 #include <string>
 #include <functional>
 
 class Router {
 public:
-    void addRoute(std::string method, std::string route, std::function<void(HttpRequest& req, HttpResponse& res)> handler);
-    std::function<void(HttpRequest& req, HttpResponse& res)> findRoute(HttpRequest& request);
+    void addRoute(std::string method, std::string route, Route::RouteHandler handler);
+    HttpResponse executeRoute(HttpRequest& request);
 private:
-    std::map<Route, std::function<void(HttpRequest& req, HttpResponse& res)>> routes;
+    std::vector<Route> routes;
+
+    std::string pathToStatic = "public";
 };
 

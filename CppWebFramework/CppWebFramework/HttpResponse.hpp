@@ -7,9 +7,15 @@ class HttpResponse {
 public:
     HttpResponse();
 
+    int getStatusCode();
+    std::string getReasonPhrase();
+    std::string getVersion();
+    std::string getHeader(const std::string& field);
+    std::string getBody();
+
     void setStatus(int statusCode, const std::string& reasonPhrase);
     void setVersion(const std::string& version);
-    void setHeader(const std::string& field, const std::string& value);
+    void addHeader(const std::string& field, const std::string& value);
     void setBody(const std::string& body);
     void setBodyFromFile(const std::string& filePath);
     std::string toString() const;
