@@ -6,10 +6,13 @@
 #include <string>
 #include <functional>
 
+#define handlerArgs HttpRequest& request, HttpResponse& response, NextFunction next
+
 class Router {
 public:
-    void addRoute(std::string method, std::string route, Route::RouteHandler handler);
+    void addRoute(const std::string& method, const std::string& route, const Route::RouteHandler& handler);
     HttpResponse executeRoute(HttpRequest& request);
+    void setPathToStatic(const std::string& path);
 private:
     std::vector<Route> routes;
 

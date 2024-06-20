@@ -1,6 +1,6 @@
 #include "Router.hpp"
 
-void Router::addRoute(std::string method, std::string route, Route::RouteHandler handler) {
+void Router::addRoute(const std::string& method, const std::string& route, const Route::RouteHandler& handler) {
     routes.push_back(Route(route, method, handler));
 }
 
@@ -15,7 +15,7 @@ HttpResponse Router::executeRoute(HttpRequest& request) {
                 nextCalled = true;
             };
             auto handler = route.getHandler();
-            handler(request, response, next);
+            handler(request, std::ref(response), next);
 
             if(nextCalled) {
                 continue;
@@ -24,9 +24,14 @@ HttpResponse Router::executeRoute(HttpRequest& request) {
             return response;
         }
     }
-    response.setBodyFromFile(request.getURI().substr(1));
+    response.setBodyFromFile(pathToStatic + request.getURI());
     if(response.getBody() != "") {
         return response;
     }
     response.setStatus(404, "Route not found");
+    return response;
+}
+
+void Router::setPathToStatic(const std::string& path) {
+    pathToStatic = path;
 }

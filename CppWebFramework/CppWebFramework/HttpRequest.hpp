@@ -5,7 +5,7 @@
 
 class HttpRequest {
 public:
-    HttpRequest(const char* request);
+    HttpRequest(const std::string& request);
     
     std::string getMethod() const;
     std::string getURI() const;
@@ -26,7 +26,7 @@ private:
     std::map<std::string, std::string> headers;
     std::map<std::string, std::string> params;
 
-    void parseRaw(const char* request);
+    void parseRaw(const std::string& request);
     void parseRequestLine(const std::string& line);
     void parseHeaderLine(const std::string& line);
     void parseUriParams();
