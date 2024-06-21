@@ -1,3 +1,4 @@
+#pragma once
 #include "Router.hpp"
 #include "UnitTests.hpp"
 
