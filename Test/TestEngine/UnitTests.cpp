@@ -27,5 +27,5 @@ void UnitTests::run()
             }
         }
     }
-    std::println("{} of {} {} have passed", successCount, totalCount, totalCount == 1 ? "test" : "tests");
+    std::println("{} of {} {} have passed\n", successCount, totalCount, totalCount == 1 ? "test" : "tests");
 }

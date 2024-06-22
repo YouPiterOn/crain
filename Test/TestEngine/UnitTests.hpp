@@ -21,6 +21,20 @@
         throw std::invalid_argument("Assertion failed"); \
     }
 
+#define ASSERT_TRUE(value) \
+    if ( value != true ) { \
+        auto location = std::source_location::current(); \
+        std::println("Assert failed: {}(which is equal to {}) is not true at {}:{}", #value, value, location.file_name(), location.line()); \
+        throw std::invalid_argument("Assertion failed"); \
+    }
+
+#define ASSERT_FALSE(value) \
+    if ( value != false ) { \
+        auto location = std::source_location::current(); \
+        std::println("Assert failed: {}(which is equal to {}) is not false at {}:{}", #value, value, location.file_name(), location.line()); \
+        throw std::invalid_argument("Assertion failed"); \
+    }
+
 class UnitTests {
 public:
     using TestFunc = std::function<void(void)>;

@@ -1,7 +1,7 @@
 #include "Router.hpp"
 
 void Router::addRoute(const std::string& method, const std::string& route, const Route::RouteHandler& handler) {
-    routes.push_back(Route(route, method, handler));
+    routes.push_back(Route(method, route, handler));
 }
 
 HttpResponse Router::executeRoute(HttpRequest& request) {
@@ -25,7 +25,7 @@ HttpResponse Router::executeRoute(HttpRequest& request) {
         }
     }
     response.setBodyFromFile(pathToStatic + request.getURI());
-    if(response.getBody() != "") {
+    if(response.getStatusCode() != 404) {
         return response;
     }
     response.setStatus(404, "Route not found");

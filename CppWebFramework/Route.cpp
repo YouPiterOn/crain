@@ -2,9 +2,9 @@
 #include <algorithm>
 #include <sstream>
 
-Route::Route(const std::string& path, const std::string& method, const RouteHandler& handler) {
-    setPath(path);
+Route::Route(const std::string& method, const std::string& path, const RouteHandler& handler) {
     setMethod(method);
+    setPath(path);
     setHandler(handler);
 }
 

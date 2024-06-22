@@ -51,8 +51,7 @@ void HttpResponse::setBodyFromFile(const std::string& filePath) {
         body = buffer.str();
         headers["Content-Length"] = std::to_string(body.size());
     } else {
-        setStatus(404, "Not Found");
-        setBody("File not found");
+        setStatus(404, "File not found");
     }
 }
 
