@@ -1,11 +1,11 @@
 #pragma once
-#include "Router.hpp"
-#include "HttpHandler.hpp"
 #include <thread>
 #include <mutex>
 #include <queue>
 #include <iostream>
 #include <winsock2.h>
+#include <atomic>
+#include <condition_variable>
 #pragma comment(lib, "ws2_32.lib")
 
 struct ServerMessage {
@@ -21,7 +21,7 @@ public:
 
     void run();
     ServerMessage getRequest();
-    int sendResponse(const ServerMessage&);
+    void addResponse(ServerMessage response);
 
 private:
     SOCKET serverSocket;
@@ -31,12 +31,26 @@ private:
     sockaddr_in socketAddress;
     int socketAddress_len;
 
+    void clientHandler(SOCKET clientSocket);
+
     std::thread requestReciever_t;
     std::mutex requestQueue_mtx;
     std::queue<ServerMessage> requestQueue;
 
-    void recieveRequests();
+    void requestReciever();
+
+    std::thread responseSender_t;
+    std::condition_variable responseSender_cv;
+    std::mutex responseQueue_mtx;
+    std::queue<ServerMessage> responseQueue;
+
+    void responseSender();
+    void sendResponse(const ServerMessage&);
+
+    std::atomic<bool> isRunning;
+
     void logError(const std::string &errorMessage);
     int startServer();
     void closeServer();
+
 };

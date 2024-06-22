@@ -2,11 +2,11 @@
 #include <sstream>
 #include <iostream>
 
-HttpRequest::HttpRequest(const char* request) {
+HttpRequest::HttpRequest(const std::string& request) {
     parseRaw(request);
 }
 
-void HttpRequest::parseRaw(const char* request) {
+void HttpRequest::parseRaw(const std::string& request) {
     std::istringstream stream(request);
     std::string line;
     bool isFirstLine = true;
