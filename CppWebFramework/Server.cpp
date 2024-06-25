@@ -69,6 +69,10 @@ ServerMessage Server::getRequest() {
     return m;
 }
 
+bool Server::isRequestQueueEmpty() {
+    return requestQueue.empty();
+}
+
 void Server::addResponse(ServerMessage response) {
     std::lock_guard<std::mutex> lock(responseQueue_mtx);
     responseQueue.push(response);
@@ -81,9 +85,21 @@ void Server::clientHandler(SOCKET clientSocket) {
     fdArray[0].events = POLLIN;
 
     while (true) {
-        int pollResult = WSAPoll(fdArray, 1, 15000);
+        int pollResult = WSAPoll(fdArray, 1, 5000);
 
         if (pollResult > 0) {
+            if (fdArray[0].revents & POLLERR) {
+                logError("Socket error");
+                return;
+            }
+            if (fdArray[0].revents & POLLHUP) {
+                logError("Socket hang-up");
+                return;
+            }
+            if (fdArray[0].revents & POLLNVAL) {
+                logError("Invalid socket");
+                return;
+            }
             if (fdArray[0].revents & POLLIN) {
                 char rawRequest[10240] = {0};
                 int bytesReceived = recv(clientSocket, rawRequest, 10240, 0);
@@ -91,15 +107,14 @@ void Server::clientHandler(SOCKET clientSocket) {
                     logError("Failed to receive bytes from client socket connection");
                     return;
                 }
-
                 std::lock_guard<std::mutex> lock(requestQueue_mtx);
                 requestQueue.push(ServerMessage(rawRequest, clientSocket));
             }
         } else if (pollResult == 0) {
-            break;
+            return;
         } else {
             logError("WSAPoll failed");
-            break;
+            return;
         }
     }
 }
@@ -112,7 +127,7 @@ void Server::requestReciever() {
             logError("Server failed to accept incoming connection");
             continue;
         }
-        std::thread(&Server::clientHandler, this, std::ref(newSocket)).detach();
+        std::thread(&Server::clientHandler, this, newSocket).detach();
     }
 }
 

@@ -22,6 +22,9 @@ public:
     void run();
     ServerMessage getRequest();
     void addResponse(ServerMessage response);
+    bool isRequestQueueEmpty();
+
+    
 
 private:
     SOCKET serverSocket;

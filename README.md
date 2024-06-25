@@ -9,9 +9,9 @@ Student project created just to learn, nothing specific
 ### Quick start
 
  1. To start include `App.hpp` header and create object `App`
-    
-    `App app("0.0.0.0", 4000);`
-
+    ```
+    App app("0.0.0.0", 4000);
+    ```
     Arguments are host and port where to run the server
 
  2. Add routes using `router` component and its method `addRoute`

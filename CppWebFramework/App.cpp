@@ -8,19 +8,15 @@ void App::run() {
     appLoop();
 }
 
-void App::stop() {
-    server.~Server();
-}
-
 void App::appLoop() {
-    while(true) {
-        auto serverReq = server.getRequest();
-        if(serverReq.clientSocket == 0) {
-            continue;
-        }
-        HttpRequest req(serverReq.rawMessage);
-        HttpResponse res = router.executeRoute(req);
-        ServerMessage serverRes(res.toString(), serverReq.clientSocket);
-        server.addResponse(serverRes);
+    while (true) {
+            if(server.isRequestQueueEmpty()) {
+                continue;
+            }
+            ServerMessage serverReq = server.getRequest();
+            HttpRequest req(serverReq.rawMessage);
+            HttpResponse res = router.executeRoute(req);
+            ServerMessage serverRes(res.toString(), serverReq.clientSocket);
+            server.addResponse(serverRes);
     }
 }
