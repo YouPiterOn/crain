@@ -25,11 +25,16 @@ void Server::run() {
     std::println("Port: {}", ntohs(socketAddress.sin_port));
     std::println("#-----------------------------#");
 
-
-    requestReciever_t = std::thread(&Server::requestReciever, this);
-    responseSender_t = std::thread(&Server::responseSender, this);
-
     isRunning = true;
+
+    while(isRunning) {
+        SOCKET newSocket = accept(serverSocket, (sockaddr *)&socketAddress, &socketAddress_len);
+        if (newSocket < 0) {
+            logError("Server failed to accept incoming connection");
+            continue;
+        }
+        std::thread(&Server::clientHandler, this, newSocket).detach();
+    }
 }
 
 
@@ -58,25 +63,10 @@ void Server::closeServer() {
     closesocket(serverSocket);
     WSACleanup();
     isRunning = false;
-    requestReciever_t.join();
 }
 
-ServerMessage Server::getRequest() {
-    std::lock_guard<std::mutex> lock(requestQueue_mtx);
-    while(requestQueue.empty()) { return ServerMessage("", 0); }
-    ServerMessage m = requestQueue.front();
-    requestQueue.pop();
-    return m;
-}
-
-bool Server::isRequestQueueEmpty() {
-    return requestQueue.empty();
-}
-
-void Server::addResponse(ServerMessage response) {
-    std::lock_guard<std::mutex> lock(responseQueue_mtx);
-    responseQueue.push(response);
-    responseSender_cv.notify_all();
+void Server::setRequestHandler(RequestHandler handler) {
+    requestHandler = handler;
 }
 
 void Server::clientHandler(SOCKET clientSocket) {
@@ -107,8 +97,7 @@ void Server::clientHandler(SOCKET clientSocket) {
                     logError("Failed to receive bytes from client socket connection");
                     return;
                 }
-                std::lock_guard<std::mutex> lock(requestQueue_mtx);
-                requestQueue.push(ServerMessage(rawRequest, clientSocket));
+                std::thread(&Server::requestProcesser, this, clientSocket, rawRequest).detach();
             }
         } else if (pollResult == 0) {
             return;
@@ -120,44 +109,23 @@ void Server::clientHandler(SOCKET clientSocket) {
 }
 
 
-void Server::requestReciever() {
-    while(isRunning) {
-        SOCKET newSocket = accept(serverSocket, (sockaddr *)&socketAddress, &socketAddress_len);
-        if (newSocket < 0) {
-            logError("Server failed to accept incoming connection");
-            continue;
-        }
-        std::thread(&Server::clientHandler, this, newSocket).detach();
-    }
+void Server::requestProcesser(SOCKET clientSocket, std::string request) {
+    std::string response = requestHandler(request);
+    sendResponse(clientSocket, response);
+    return;
 }
 
-void Server::responseSender() {
-    while (isRunning) {
-        std::unique_lock<std::mutex> lock(responseQueue_mtx);
-        
-        responseSender_cv.wait(lock, [this] { return !responseQueue.empty() || !isRunning; });
-        
-        while (!responseQueue.empty()) {
-            auto response = responseQueue.front();
-            responseQueue.pop();
-            lock.unlock();
-            sendResponse(response);
-            lock.lock();
-        }
-    }
-}
-
-void Server::sendResponse(const ServerMessage& message) {
+void Server::sendResponse(SOCKET clientSocket, std::string response) {
     int bytesSent;
     long totalBytesSent = 0;
-    while (totalBytesSent < message.rawMessage.size()) {
-        bytesSent = send(message.clientSocket, message.rawMessage.c_str(), message.rawMessage.size(), 0);
+    while (totalBytesSent < response.size()) {
+        bytesSent = send(clientSocket, response.c_str(), response.size(), 0);
         if (bytesSent < 0) {
             break;
         }
         totalBytesSent += bytesSent;
     }
-    if (totalBytesSent != message.rawMessage.size()) {
+    if (totalBytesSent != response.size()) {
         logError("Error sending response to client.");
     }
 }

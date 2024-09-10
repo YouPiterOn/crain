@@ -22,6 +22,9 @@ bool Route::isRouteMatch(HttpRequest& request) {
         if (routeParts[i].empty() || requestParts[i].empty()) {
             continue;
         }
+        if (routeParts[i] == "*") {
+            continue;
+        }
         if (routeParts[i][0] == ':') {
             std::string paramName = routeParts[i].substr(1);
             request.addParam(paramName, requestParts[i]);
@@ -52,7 +55,7 @@ std::string Route::getMethod() {
 std::string Route::getPath() {
     return path;
 }
-Route::RouteHandler Route::getHandler() {
+RouteHandler Route::getHandler() {
     return handler;
 }
 

@@ -4,13 +4,26 @@
 #include <atomic>
 #include <thread>
 
+
+
 class App {
     public:
         App(std::string ip, int port);
         void run();
+
+        template<ConvertibleToHandler ...Handlers>
+        void use(Handlers&& ...handlers) {
+            use("ANY", "/*", RouteHandler(handlers)...);
+        }
+        template<ConvertibleToHandler ...Handlers>
+        void use(std::string method, std::string route, Handlers&& ...handlers) {
+            (router.addRoute(method, route, RouteHandler(handlers)), ...);
+        }
         
+        void setPathToStatic(const std::string& path);
+    private:
+        std::mutex router_m;
         Server server;
         Router router;
-    private:
-        void appLoop();
+        std::string requestHandler(std::string request);
 };

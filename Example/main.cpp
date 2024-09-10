@@ -1,22 +1,26 @@
 #include "App.hpp"
+#include <iostream>
 
 int main() {
+    auto s = [](handlerArgs){
+        response.setBodyFromFile("Example/public/index.html");
+    };
+
     App app("0.0.0.0", 4000);
 
-    app.router.addRoute("GET", "/home", [](handlerArgs){
-        response.setBodyFromFile("Example/public/index.html");
-    });
+    app.use("GET", "/", s);
 
-    app.router.addRoute("GET", "/home/other", [](handlerArgs){
-        request.addParam("p", "it works");
-        next();
-    });
+    app.use("GET", "/home/other",
+        [](handlerArgs){
+            request.addParam("p", "it works");
+            next();
+        },
+        [](handlerArgs){
+            response.setBody(request.getParam("p"));
+        }
+    );
 
-    app.router.addRoute("GET", "/home/other", [](handlerArgs){
-        response.setBody(request.getParam("p"));
-    });
-
-    app.router.setPathToStatic("Example/public");
+    app.setPathToStatic("Example/public");
 
     app.run();
 

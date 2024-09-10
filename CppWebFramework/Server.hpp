@@ -6,13 +6,10 @@
 #include <winsock2.h>
 #include <atomic>
 #include <condition_variable>
+#include <functional>
 #pragma comment(lib, "ws2_32.lib")
 
-struct ServerMessage {
-    ServerMessage(std::string rawMessage, SOCKET clientSocket) : rawMessage(rawMessage), clientSocket(clientSocket) {}
-    std::string rawMessage;
-    SOCKET clientSocket;
-};
+using RequestHandler = std::function<std::string(std::string)>;
 
 class Server {
 public:
@@ -20,11 +17,8 @@ public:
     ~Server();
 
     void run();
-    ServerMessage getRequest();
-    void addResponse(ServerMessage response);
-    bool isRequestQueueEmpty();
-
     
+    void setRequestHandler(RequestHandler);
 
 private:
     SOCKET serverSocket;
@@ -34,26 +28,17 @@ private:
     sockaddr_in socketAddress;
     int socketAddress_len;
 
+    RequestHandler requestHandler;
+
     void clientHandler(SOCKET clientSocket);
 
-    std::thread requestReciever_t;
-    std::mutex requestQueue_mtx;
-    std::queue<ServerMessage> requestQueue;
+    void requestProcesser(SOCKET clientSocket, std::string request);
 
-    void requestReciever();
-
-    std::thread responseSender_t;
-    std::condition_variable responseSender_cv;
-    std::mutex responseQueue_mtx;
-    std::queue<ServerMessage> responseQueue;
-
-    void responseSender();
-    void sendResponse(const ServerMessage&);
+    void sendResponse(SOCKET clientSocket, std::string response);
 
     std::atomic<bool> isRunning;
 
     void logError(const std::string &errorMessage);
     int startServer();
     void closeServer();
-
 };

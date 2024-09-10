@@ -1,6 +1,6 @@
 #include "Router.hpp"
 
-void Router::addRoute(const std::string& method, const std::string& route, const Route::RouteHandler& handler) {
+void Router::addRoute(const std::string& method, const std::string& route, const RouteHandler& handler) {
     routes.push_back(Route(method, route, handler));
 }
 

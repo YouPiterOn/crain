@@ -7,9 +7,13 @@
 
 using NextFunction = std::function<void()>;
 
+using RouteHandler = std::function<void(HttpRequest&, HttpResponse&, NextFunction)>;
+
+template<typename ...T>
+concept ConvertibleToHandler = (std::convertible_to<T, std::function<void(HttpRequest&, HttpResponse&, NextFunction)>> && ...);
+
 class Route {
 public:
-    using RouteHandler = std::function<void(HttpRequest&, HttpResponse&, NextFunction)>;
 
     Route(const std::string& path, const std::string& method, const RouteHandler& handler);
    
