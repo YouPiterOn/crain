@@ -1,12 +1,12 @@
-#include "App.hpp"
+#include "../crain/app.hpp"
 #include <iostream>
 
 int main() {
     auto s = [](handlerArgs){
-        response.setBodyFromFile("Example/public/index.html");
+        response.setBodyFromFile("example/public/index.html");
     };
 
-    App app("0.0.0.0", 4000);
+    crain::App app("0.0.0.0", 4000);
 
     app.use("GET", "/", s);
 
@@ -20,7 +20,7 @@ int main() {
         }
     );
 
-    app.setPathToStatic("Example/public");
+    app.setPathToStatic("example/public");
 
     app.run();
 

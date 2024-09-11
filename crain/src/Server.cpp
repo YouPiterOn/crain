@@ -1,8 +1,10 @@
-#include "Server.hpp"
+#include "../include/Server.hpp"
 #include <WS2tcpip.h>
 #include <print>
 #include <future>
 #include <chrono>
+
+using namespace crain;
 
 Server::Server(std::string ip, int port) : serverIpAddress(ip), serverPort(port), socketAddress_len(sizeof(socketAddress)) {
     if(startServer() != 0) {
@@ -19,9 +21,13 @@ void Server::run() {
         logError("Socket listen failed");
         return;
     }
+
+    char address[20];
+    inet_ntop(AF_INET, &socketAddress.sin_addr, address, 20);
+
     std::println("#-----------------------------#");
     std::println("Server is running on:");
-    std::println("Address: {}", inet_ntoa(socketAddress.sin_addr));
+    std::println("Address: {}", address);
     std::println("Port: {}", ntohs(socketAddress.sin_port));
     std::println("#-----------------------------#");
 
@@ -131,6 +137,8 @@ void Server::sendResponse(SOCKET clientSocket, std::string response) {
 }
 
 void Server::logError(const std::string &errorMessage) {
-    std::println(std::cerr, "WsaError: {}", WSAGetLastError());
+    int error = WSAGetLastError();
+    if(error == 0) return;
+    std::println(std::cerr, "WsaError: {}", error);
     std::println(std::cerr, "{}", errorMessage);
 }

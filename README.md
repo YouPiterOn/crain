@@ -1,55 +1,72 @@
-# CppWebFramework
+# Crain web framework
 
-Web framework with custom server
-
-Student project created just to learn, nothing specific
+Student project created first of all to learn but feel free to use and commit <3
 
 ## User guide
 
 ### Quick start
 
- 1. To start include `App.hpp` header and create object `App`
+ 1. To start include `app.hpp` header and create object `App`
     ```
-    App app("0.0.0.0", 4000);
+    crain::App app("0.0.0.0", 4000);
     ```
     Arguments are host and port where to run the server
 
- 2. Add routes using `router` component and its method `addRoute`
+ 2. Add routes by calling `app.use`
     ```
-    app.router.addRoute("GET", "/home", [](handlerArgs){ 
-
-    });
+    app.use(*method*, *route*, *handler1*, *handler2*, ...);
     ```
-    Arguments for `addRoute` are method, route and handler
+    or
+    ```
+    app.use(*handler1*, *handler2*, ...);
+    ```
 
     Handler is a function with three arguments `HttpRequest request, HttpResponse respone, NextFunction next`
 
     You can utilize the defined `handlerArgs` keyword to place them automaticaly
 
- 3. In lambda function perform actions with `request` using its functionality
+    Example:
     ```
-    app.router.addRoute("GET", "/home", [](handlerArgs){ 
-        response.setBodyFromFile("Example/public/index.html");
-    });
+    app.use("GET", "/", [](handlerArgs){});
     ```
- 4. When you finish routing use `app.run()` to start the server and working loop
+
+ 3. Inside the handler function perform actions with `request` and `response` or call `next()` to move to the next suitable handler
+    
+    Example:
     ```
-    #include "App.hpp"
+    app.use("GET", "/home/other",
+        [](handlerArgs){
+            request.addParam("p", "it works");
+            next();
+        },
+        [](handlerArgs){
+            response.setBody(request.getParam("p"));
+        }
+    );
+    ```
+ 4. When you finish routing add path to the folder with static files to serve  by `app.setPathToStatic("example/public");` and use `app.run()` to start the server and working loop
+
+    Full example:
+    ```
+    #include "crain/app.hpp"
 
     int main() {
-        App app("0.0.0.0", 4000);
+        crain::App app("0.0.0.0", 4000);
 
-        app.router.addRoute("GET", "/home", [](handlerArgs){
-            response.setBodyFromFile("Example/public/index.html");
+        app.use("GET", "/home", [](handlerArgs){
+            response.setBodyFromFile("public/index.html");
         });
+
+        app.setPathToStatic("example/public");
 
         app.run();
 
         return 0;
     }
     ```
-### Basic features
+5. Originally library is compiled with clang++ and c++23
 
- - In handler you can call `next()` function which will make router search for the next siutable route
-
- - By using `router.setPathToStatic()` you can set your own path to folder with static files
+    To compile example use:
+    ```
+    clang++ -std=c++23 ./example/main.cpp ./crain/src/*.cpp -o main.exe
+    ```

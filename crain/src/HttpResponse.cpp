@@ -1,6 +1,8 @@
-#include "HttpResponse.hpp"
+#include "../include/HttpResponse.hpp"
 #include <fstream>
 #include <sstream>
+
+using namespace crain;
 
 HttpResponse::HttpResponse() : statusCode(200), reasonPhrase("OK"), version("HTTP/1.1") {}
 

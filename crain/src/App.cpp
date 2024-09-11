@@ -1,5 +1,7 @@
-#include "App.hpp"
+#include "../include/App.hpp"
 #include <print>
+
+using namespace crain;
 
 App::App(std::string ip, int port) : server(ip, port) {}
 

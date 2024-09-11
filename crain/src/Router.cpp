@@ -1,4 +1,6 @@
-#include "Router.hpp"
+#include "../include/Router.hpp"
+
+using namespace crain;
 
 void Router::addRoute(const std::string& method, const std::string& route, const RouteHandler& handler) {
     routes.push_back(Route(method, route, handler));

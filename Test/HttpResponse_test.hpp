@@ -8,14 +8,14 @@ void HttpResponseTests() {
 
     testSuite.addTest("Response to string (success)", [](){
         std::string rawResponse = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ngood";
-        HttpResponse response;
+        crain::HttpResponse response;
         response.setBody("good");
         ASSERT_EQ(response.toString(), rawResponse);
     });
 
     testSuite.addTest("Set response body from file (failure)", [](){
         std::string rawResponse = "HTTP/1.1 404 File not found\r\n\r\n";
-        HttpResponse response;
+        crain::HttpResponse response;
         response.setBodyFromFile("NotExisting.file");
         ASSERT_EQ(response.toString(), rawResponse);
     });

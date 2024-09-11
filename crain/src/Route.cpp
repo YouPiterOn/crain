@@ -1,6 +1,8 @@
-#include "Route.hpp"
+#include "../include/Route.hpp"
 #include <algorithm>
 #include <sstream>
+
+using namespace crain;
 
 Route::Route(const std::string& method, const std::string& path, const RouteHandler& handler) {
     setMethod(method);
