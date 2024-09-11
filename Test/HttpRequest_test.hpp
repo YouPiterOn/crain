@@ -15,7 +15,7 @@ void HttpRequestTests() {
         std::string host = "cool.host";
         std::string connection = "keep-alive";
 
-        HttpRequest request(rawRequest);
+        crain::HttpRequest request(rawRequest);
         ASSERT_EQ(request.getMethod(), method);
         ASSERT_EQ(request.getURI(), uri);
         ASSERT_EQ(request.getVersion(), version);

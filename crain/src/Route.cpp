@@ -1,6 +1,8 @@
-#include "Route.hpp"
+#include "../include/Route.hpp"
 #include <algorithm>
 #include <sstream>
+
+using namespace crain;
 
 Route::Route(const std::string& method, const std::string& path, const RouteHandler& handler) {
     setMethod(method);
@@ -20,6 +22,9 @@ bool Route::isRouteMatch(HttpRequest& request) {
 
     for (size_t i = 0; i < routeParts.size(); ++i) {
         if (routeParts[i].empty() || requestParts[i].empty()) {
+            continue;
+        }
+        if (routeParts[i] == "*") {
             continue;
         }
         if (routeParts[i][0] == ':') {
@@ -52,7 +57,7 @@ std::string Route::getMethod() {
 std::string Route::getPath() {
     return path;
 }
-Route::RouteHandler Route::getHandler() {
+RouteHandler Route::getHandler() {
     return handler;
 }
 

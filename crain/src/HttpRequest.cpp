@@ -1,6 +1,8 @@
-#include "HttpRequest.hpp"
+#include "../include/HttpRequest.hpp"
 #include <sstream>
 #include <iostream>
+
+using namespace crain;
 
 HttpRequest::HttpRequest(const std::string& request) {
     parseRaw(request);

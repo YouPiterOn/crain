@@ -1,8 +1,10 @@
-#include "Server.hpp"
+#include "../include/Server.hpp"
 #include <WS2tcpip.h>
 #include <print>
 #include <future>
 #include <chrono>
+
+using namespace crain;
 
 Server::Server(std::string ip, int port) : serverIpAddress(ip), serverPort(port), socketAddress_len(sizeof(socketAddress)) {
     if(startServer() != 0) {
@@ -19,17 +21,26 @@ void Server::run() {
         logError("Socket listen failed");
         return;
     }
+
+    char address[20];
+    inet_ntop(AF_INET, &socketAddress.sin_addr, address, 20);
+
     std::println("#-----------------------------#");
     std::println("Server is running on:");
-    std::println("Address: {}", inet_ntoa(socketAddress.sin_addr));
+    std::println("Address: {}", address);
     std::println("Port: {}", ntohs(socketAddress.sin_port));
     std::println("#-----------------------------#");
 
-
-    requestReciever_t = std::thread(&Server::requestReciever, this);
-    responseSender_t = std::thread(&Server::responseSender, this);
-
     isRunning = true;
+
+    while(isRunning) {
+        SOCKET newSocket = accept(serverSocket, (sockaddr *)&socketAddress, &socketAddress_len);
+        if (newSocket < 0) {
+            logError("Server failed to accept incoming connection");
+            continue;
+        }
+        std::thread(&Server::clientHandler, this, newSocket).detach();
+    }
 }
 
 
@@ -58,21 +69,10 @@ void Server::closeServer() {
     closesocket(serverSocket);
     WSACleanup();
     isRunning = false;
-    requestReciever_t.join();
 }
 
-ServerMessage Server::getRequest() {
-    std::lock_guard<std::mutex> lock(requestQueue_mtx);
-    while(requestQueue.empty()) { return ServerMessage("", 0); }
-    ServerMessage m = requestQueue.front();
-    requestQueue.pop();
-    return m;
-}
-
-void Server::addResponse(ServerMessage response) {
-    std::lock_guard<std::mutex> lock(responseQueue_mtx);
-    responseQueue.push(response);
-    responseSender_cv.notify_all();
+void Server::setRequestHandler(RequestHandler handler) {
+    requestHandler = handler;
 }
 
 void Server::clientHandler(SOCKET clientSocket) {
@@ -81,9 +81,21 @@ void Server::clientHandler(SOCKET clientSocket) {
     fdArray[0].events = POLLIN;
 
     while (true) {
-        int pollResult = WSAPoll(fdArray, 1, 15000);
+        int pollResult = WSAPoll(fdArray, 1, 5000);
 
         if (pollResult > 0) {
+            if (fdArray[0].revents & POLLERR) {
+                logError("Socket error");
+                return;
+            }
+            if (fdArray[0].revents & POLLHUP) {
+                logError("Socket hang-up");
+                return;
+            }
+            if (fdArray[0].revents & POLLNVAL) {
+                logError("Invalid socket");
+                return;
+            }
             if (fdArray[0].revents & POLLIN) {
                 char rawRequest[10240] = {0};
                 int bytesReceived = recv(clientSocket, rawRequest, 10240, 0);
@@ -91,63 +103,42 @@ void Server::clientHandler(SOCKET clientSocket) {
                     logError("Failed to receive bytes from client socket connection");
                     return;
                 }
-
-                std::lock_guard<std::mutex> lock(requestQueue_mtx);
-                requestQueue.push(ServerMessage(rawRequest, clientSocket));
+                std::thread(&Server::requestProcesser, this, clientSocket, rawRequest).detach();
             }
         } else if (pollResult == 0) {
-            break;
+            return;
         } else {
             logError("WSAPoll failed");
-            break;
+            return;
         }
     }
 }
 
 
-void Server::requestReciever() {
-    while(isRunning) {
-        SOCKET newSocket = accept(serverSocket, (sockaddr *)&socketAddress, &socketAddress_len);
-        if (newSocket < 0) {
-            logError("Server failed to accept incoming connection");
-            continue;
-        }
-        std::thread(&Server::clientHandler, this, std::ref(newSocket)).detach();
-    }
+void Server::requestProcesser(SOCKET clientSocket, std::string request) {
+    std::string response = requestHandler(request);
+    sendResponse(clientSocket, response);
+    return;
 }
 
-void Server::responseSender() {
-    while (isRunning) {
-        std::unique_lock<std::mutex> lock(responseQueue_mtx);
-        
-        responseSender_cv.wait(lock, [this] { return !responseQueue.empty() || !isRunning; });
-        
-        while (!responseQueue.empty()) {
-            auto response = responseQueue.front();
-            responseQueue.pop();
-            lock.unlock();
-            sendResponse(response);
-            lock.lock();
-        }
-    }
-}
-
-void Server::sendResponse(const ServerMessage& message) {
+void Server::sendResponse(SOCKET clientSocket, std::string response) {
     int bytesSent;
     long totalBytesSent = 0;
-    while (totalBytesSent < message.rawMessage.size()) {
-        bytesSent = send(message.clientSocket, message.rawMessage.c_str(), message.rawMessage.size(), 0);
+    while (totalBytesSent < response.size()) {
+        bytesSent = send(clientSocket, response.c_str(), response.size(), 0);
         if (bytesSent < 0) {
             break;
         }
         totalBytesSent += bytesSent;
     }
-    if (totalBytesSent != message.rawMessage.size()) {
+    if (totalBytesSent != response.size()) {
         logError("Error sending response to client.");
     }
 }
 
 void Server::logError(const std::string &errorMessage) {
-    std::println(std::cerr, "WsaError: {}", WSAGetLastError());
+    int error = WSAGetLastError();
+    if(error == 0) return;
+    std::println(std::cerr, "WsaError: {}", error);
     std::println(std::cerr, "{}", errorMessage);
 }

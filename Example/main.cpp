@@ -1,22 +1,26 @@
-#include "App.hpp"
+#include "../crain/app.hpp"
+#include <iostream>
 
 int main() {
-    App app("0.0.0.0", 4000);
+    auto s = [](handlerArgs){
+        response.setBodyFromFile("example/public/index.html");
+    };
 
-    app.router.addRoute("GET", "/home", [](handlerArgs){
-        response.setBodyFromFile("Example/public/index.html");
-    });
+    crain::App app("0.0.0.0", 4000);
 
-    app.router.addRoute("GET", "/home/other", [](handlerArgs){
-        request.addParam("p", "it works");
-        next();
-    });
+    app.use("GET", "/", s);
 
-    app.router.addRoute("GET", "/home/other", [](handlerArgs){
-        response.setBody(request.getParam("p"));
-    });
+    app.use("GET", "/home/other",
+        [](handlerArgs){
+            request.addParam("p", "it works");
+            next();
+        },
+        [](handlerArgs){
+            response.setBody(request.getParam("p"));
+        }
+    );
 
-    app.router.setPathToStatic("Example/public");
+    app.setPathToStatic("example/public");
 
     app.run();
 
