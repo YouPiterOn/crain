@@ -1,4 +1,5 @@
 #include "../include/Router.hpp"
+#include "../include/utils.hpp"
 
 using namespace crain;
 
@@ -9,17 +10,21 @@ void Router::addRoute(const std::string& method, const std::string& route, const
 HttpResponse Router::executeRoute(HttpRequest& request) {
     HttpResponse response;
 
-    for(auto route : routes) {
-        if(route.isRouteMatch(request)) {
-            bool nextCalled = false;
+    std::vector<std::string> requestParts = splitPath(request.getURI());
 
-            NextFunction next = [&nextCalled]() {
-                nextCalled = true;
-            };
+    bool nextCalled = false;
+    NextFunction next = [&nextCalled]() {
+        nextCalled = true;
+    };
+
+    for(const auto &route : routes) {
+        if(route.isRouteMatch(request, requestParts)) {
+            
             auto handler = route.getHandler();
             handler(request, std::ref(response), next);
 
             if(nextCalled) {
+                nextCalled = false;
                 continue;
             }
 

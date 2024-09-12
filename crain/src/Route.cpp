@@ -1,6 +1,6 @@
 #include "../include/Route.hpp"
+#include "../include/utils.hpp"
 #include <algorithm>
-#include <sstream>
 
 using namespace crain;
 
@@ -8,14 +8,14 @@ Route::Route(const std::string& method, const std::string& path, const RouteHand
     setMethod(method);
     setPath(path);
     setHandler(handler);
+    routeParts = splitPath(path);
 }
 
-bool Route::isRouteMatch(HttpRequest& request) {
+bool Route::isRouteMatch(HttpRequest& request, const std::vector<std::string> &requestParts) const {
     if(request.getMethod() != method && method != "ANY") {
         return false;
     }
-    auto routeParts = splitPath(path);
-    auto requestParts = splitPath(request.getURI());
+    
     if (routeParts.size() != requestParts.size()) {
         return false;
     }
@@ -51,24 +51,12 @@ void Route::setHandler(const RouteHandler& handler) {
     this->handler = handler;
 }
 
-std::string Route::getMethod() {
+std::string Route::getMethod() const {
     return method;
 }
-std::string Route::getPath() {
+std::string Route::getPath() const {
     return path;
 }
-RouteHandler Route::getHandler() {
+RouteHandler Route::getHandler() const {
     return handler;
-}
-
-
-
-std::vector<std::string> Route::splitPath(const std::string& path){
-    std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(path);
-    while (std::getline(tokenStream, token, '/')) {
-        tokens.push_back(token);
-    }
-    return tokens;
 }

@@ -18,20 +18,19 @@ namespace crain {
 
         Route(const std::string& path, const std::string& method, const RouteHandler& handler);
     
-        bool isRouteMatch(HttpRequest& request);
+        bool isRouteMatch(HttpRequest& request, const std::vector<std::string> &requestParts) const;
 
         void setMethod(std::string method);
         void setPath(std::string path);
         void setHandler(const RouteHandler& handler);
 
-        std::string getMethod();
-        std::string getPath();
-        RouteHandler getHandler();
+        std::string getMethod() const;
+        std::string getPath() const;
+        RouteHandler getHandler() const;
     private:
         std::string path;
         std::string method;
         RouteHandler handler;
-
-        std::vector<std::string> splitPath(const std::string& path);
+        std::vector<std::string> routeParts;
     };
 }
