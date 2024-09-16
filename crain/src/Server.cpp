@@ -1,12 +1,19 @@
 #include "../include/Server.hpp"
 #include <WS2tcpip.h>
 #include <print>
+#include <iostream>
 #include <future>
 #include <chrono>
 
 using namespace crain;
 
-Server::Server(std::string ip, int port) : serverIpAddress(ip), serverPort(port), socketAddress_len(sizeof(socketAddress)) {
+Server::Server(std::string ip, int port, ServerConfig config) : 
+    serverIpAddress(ip),
+    serverPort(port), 
+    socketAddress_len(sizeof(socketAddress)), 
+    config(config),
+    workersPool(config.poolSize)
+{
     if(startServer() != 0) {
         throw std::exception("Error starting server");
     }
@@ -71,11 +78,13 @@ void Server::closeServer() {
     isRunning = false;
 }
 
-void Server::setRequestHandler(RequestHandler handler) {
-    requestHandler = handler;
+void Server::setRequestHandler(std::function<std::string(std::string)> requestHandler) {
+    workersPool.setRequestHandler(requestHandler);
 }
 
 void Server::clientHandler(SOCKET clientSocket) {
+    char rawRequest[10240] = {0};
+
     WSAPOLLFD fdArray[1];
     fdArray[0].fd = clientSocket;
     fdArray[0].events = POLLIN;
@@ -97,13 +106,12 @@ void Server::clientHandler(SOCKET clientSocket) {
                 return;
             }
             if (fdArray[0].revents & POLLIN) {
-                char rawRequest[10240] = {0};
                 int bytesReceived = recv(clientSocket, rawRequest, 10240, 0);
                 if (bytesReceived < 0) {
                     logError("Failed to receive bytes from client socket connection");
                     return;
                 }
-                std::thread(&Server::requestProcesser, this, clientSocket, rawRequest).detach();
+                workersPool.enqueue(clientSocket, rawRequest);
             }
         } else if (pollResult == 0) {
             return;
@@ -111,28 +119,6 @@ void Server::clientHandler(SOCKET clientSocket) {
             logError("WSAPoll failed");
             return;
         }
-    }
-}
-
-
-void Server::requestProcesser(SOCKET clientSocket, std::string request) {
-    std::string response = requestHandler(request);
-    sendResponse(clientSocket, response);
-    return;
-}
-
-void Server::sendResponse(SOCKET clientSocket, std::string response) {
-    int bytesSent;
-    long totalBytesSent = 0;
-    while (totalBytesSent < response.size()) {
-        bytesSent = send(clientSocket, response.c_str(), response.size(), 0);
-        if (bytesSent < 0) {
-            break;
-        }
-        totalBytesSent += bytesSent;
-    }
-    if (totalBytesSent != response.size()) {
-        logError("Error sending response to client.");
     }
 }
 

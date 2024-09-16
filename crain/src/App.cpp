@@ -3,7 +3,7 @@
 
 using namespace crain;
 
-App::App(std::string ip, int port) : server(ip, port) {}
+App::App(std::string ip, int port, ServerConfig serverConfig) : server(ip, port, serverConfig) {}
 
 void App::run() {
     server.setRequestHandler(std::bind(&App::requestHandler, this, std::placeholders::_1));

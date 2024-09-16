@@ -1,13 +1,14 @@
 #pragma once
 #include "Server.hpp"
 #include "Router.hpp"
+#include "ServerConfig.hpp"
 #include <atomic>
 #include <thread>
 
 namespace crain {
     class App {
         public:
-            App(std::string ip, int port);
+            App(std::string ip, int port, ServerConfig serverConfig = ServerConfig());
             void run();
 
             template<ConvertibleToHandler ...Handlers>

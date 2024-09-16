@@ -2,26 +2,26 @@
 #include <thread>
 #include <mutex>
 #include <queue>
-#include <iostream>
 #include <winsock2.h>
 #include <atomic>
 #include <condition_variable>
 #include <functional>
+#include "WorkersPool.hpp"
+#include "ServerConfig.hpp"
 #pragma comment(lib, "ws2_32.lib")
 
 namespace crain {
-    using RequestHandler = std::function<std::string(std::string)>;
-
     class Server {
     public:
-        Server(std::string ip, int port);
+        Server(std::string ip, int port, ServerConfig config);
         ~Server();
 
         void run();
         
-        void setRequestHandler(RequestHandler);
-
+        void setRequestHandler(std::function<std::string(std::string)> requestHandler);
     private:
+        const ServerConfig config;
+
         SOCKET serverSocket;
         WSADATA serverWsaData;
         std::string serverIpAddress;
@@ -29,13 +29,9 @@ namespace crain {
         sockaddr_in socketAddress;
         int socketAddress_len;
 
-        RequestHandler requestHandler;
-
         void clientHandler(SOCKET clientSocket);
 
-        void requestProcesser(SOCKET clientSocket, std::string request);
-
-        void sendResponse(SOCKET clientSocket, std::string response);
+        WorkersPool workersPool;
 
         std::atomic<bool> isRunning;
 
